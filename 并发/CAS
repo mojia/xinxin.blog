@@ -1,0 +1,42 @@
+1：什么是CAS?
+CAS是Compare And Swap的简写。CAS有三个操作数：
+		V：内存值
+		A：旧的预期值
+		B：要修改的新值
+当且仅当预期值A与内存值V相等的时候，将内存值修改为B，否则什么都不做。CAS由机器CPU硬件实现，所以该概念属于底层硬件概念。
+
+
+
+2：CAS实现
+CAS保存读-写-修改，三个串联操作为原子操作，基于总线锁定和缓存一致性。
+
+
+3：总线锁定技术
+CPU芯片与各个芯片之间通过总线连通。总线负责CPU与外界各个组件连通（包括缓存，内存）。所以当有一个cpu0核在做CAS操作的时候，总线发出一个LOCK#信号。这个时候就将CPU与内存间的通信锁住了，从而cpu0一个核独享内存。所以cpu0完成CAS操作就保证了原子性。
+
+
+4：缓存一致性
+简单讲某颗CPU对缓存中的数据做了修改后，通知其他CPU放弃存在他们内部的缓存。
+
+
+
+5：CAS应用范例
+AtomicInteger类的如下方法：
+/**
+     * Atomically increments by one the current value.
+     *
+     * @return the previous value
+     */
+    public final int getAndIncrement() {
+        for (;;) {
+            int current = get();
+            int next = current + 1;
+            if (compareAndSet(current, next))
+                return current;
+        }
+    }
+
+假设value值初始化为2，现在调用getAndIncrement(),则value值变成3。如果做到原子更新的呢？
+看循环里面，current值是从内存中获取的，为2。next值为3。因为current值与value值都为2，相等。所以compareAndSet（2，3）会执行将next值赋值给内存中value变量，从而value值变成了3。
+
+
